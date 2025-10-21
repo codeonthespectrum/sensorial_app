@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ambientes Acessíveis - App</title>
+    <link rel="stylesheet" href="styles.css">
+    <!-- Leaflet Map -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <h1>🧩 Ambientes Acessíveis</h1>
+                <p class="subtitle">Encontre espaços confortáveis para você</p>
+            </div>
+            <div class="auth-section" id="authSection">
+                <button id="loginBtn" class="btn btn-primary">Login</button>
+                <button id="registerBtn" class="btn btn-secondary">Registrar</button>
+                <button id="logoutBtn" class="btn btn-danger" style="display: none;">Sair</button>
+            </div>
+        </header>
+
+        <!-- Nav Tabs -->
+        <nav class="nav-tabs">
+            <button class="nav-tab active" data-tab="inicio">Início</button>
+            <button class="nav-tab" data-tab="buscar">Buscar Locais</button>
+            <button class="nav-tab" data-tab="registrar">Registrar Leitura</button>
+            <button class="nav-tab" data-tab="sensores">📱 Medir com Sensores</button>
+            <button class="nav-tab" data-tab="perfil" style="display: none;">Meu Perfil</button>
+        </nav>
+
+        <!-- Content -->
+        <main class="main-content">
+            <!-- Tab: Início -->
+            <section class="tab-content active" id="inicio">
+                <div class="welcome-section">
+                    <h2>Bem-vindo! 👋</h2>
+                    <p>Este aplicativo ajuda pessoas autistas e neurodivergentes a encontrar ambientes confortáveis e acessíveis.</p>
+                    
+                    <div class="stats">
+                        <div class="stat-card">
+                            <h3 id="statsUsers">0</h3>
+                            <p>Usuários Cadastrados</p>
+                        </div>
+                        <div class="stat-card">
+                            <h3 id="statsLocais">0</h3>
+                            <p>Locais Mapeados</p>
+                        </div>
+                        <div class="stat-card">
+                            <h3 id="statsRegistros">0</h3>
+                            <p>Registros Totais</p>
+                        </div>
+                    </div>
+
+                    <div class="info-section">
+                        <h3>Como funciona?</h3>
+                        <ol>
+                            <li><strong>Registre-se:</strong> Crie uma conta com sua neurodiversidade</li>
+                            <li><strong>Explore:</strong> Veja locais próximos e suas condições</li>
+                            <li><strong>Contribua:</strong> Reporte medições de ruído e luminosidade</li>
+                            <li><strong>Ganhe Selos:</strong> Locais com 100+ registros bom/ok ganham selo acessível</li>
+                        </ol>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Tab: Buscar Locais -->
+            <section class="tab-content" id="buscar">
+                <div class="search-section">
+                    <h2>🔍 Buscar Locais Acessíveis</h2>
+                    
+                    <div class="search-filters">
+                        <div class="filter-group">
+                            <label>Nome ou Endereço:</label>
+                            <input type="text" id="searchLocal" placeholder="Digite o nome ou endereço...">
+                        </div>
+                        <div class="filter-group">
+                            <label>Tipo de Ambiente:</label>
+                            <select id="tipoAmbienteFilter">
+                                <option value="">Todos</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-primary" onclick="buscarLocais()">Buscar</button>
+                        <button class="btn btn-secondary" onclick="usarGeolocalizacao()" title="Usar sua localização atual">📍 Minha Localização</button>
+                    </div>
+                    
+                    <div id="mapa" class="mapa-container"></div>
+
+                    <div class="locais-list" id="locaisList">
+                        <p class="empty">Nenhum local encontrado. Busque para começar!</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Tab: Registrar Leitura -->
+            <section class="tab-content" id="registrar">
+                <div class="register-section">
+                    <h2>📊 Registrar Medição Manual</h2>
+                    
+                    <div class="register-info">
+                        <p><strong>💡 Dica:</strong> Use a aba "📱 Medir com Sensores" para ter medições mais precisas automaticamente!</p>
+                    </div>
+
+                    <div class="form-group">
+                        <button class="btn btn-primary" onclick="obterGeolocalizacao()">📍 Obter Localização Automática</button>
+                        <p class="info-text" id="geoStatus"></p>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Nome do Local:</label>
+                        <input type="text" id="nomeLocal" placeholder="ex: Starbucks Shopping">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Endereço:</label>
+                        <input type="text" id="endereco" placeholder="ex: Rua das Flores, 123">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Tipo de Ambiente:</label>
+                        <select id="tipoAmbiente">
+                            <option value="">Selecione...</option>
+                        </select>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Latitude:</label>
+                            <input type="number" id="latitude" placeholder="-23.5505" step="0.00001" readonly style="background-color: #f0f0f0;">
+                        </div>
+                        <div class="form-group">
+                            <label>Longitude:</label>
+                            <input type="number" id="longitude" placeholder="-46.6333" step="0.00001" readonly style="background-color: #f0f0f0;">
+                        </div>
+                    </div>
+
+                    <div class="classificacao-manual">
+                        <h3>🎯 Classifique o Ambiente</h3>
+                        <p>Use seus sentidos para avaliar como é o local:</p>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Nível de Ruído:</label>
+                                <select id="nivelRuidoManual">
+                                    <option value="">Selecione...</option>
+                                    <option value="Bom">🟢 Bom - Muito silencioso</option>
+                                    <option value="Ok">🟡 Ok - Ruído moderado</option>
+                                    <option value="Atenção">🟠 Atenção - Barulhento</option>
+                                    <option value="Ruim">🔴 Ruim - Muito barulhento</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Nível de Luz:</label>
+                                <select id="nivelLuzManual">
+                                    <option value="">Selecione...</option>
+                                    <option value="Bom">🟢 Bom - Bem iluminado</option>
+                                    <option value="Ok">🟡 Ok - Iluminação ok</option>
+                                    <option value="Atenção">🟠 Atenção - Muito escuro/claro</option>
+                                    <option value="Ruim">🔴 Ruim - Iluminação inadequada</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button class="btn btn-primary btn-large" onclick="enviarRegistroManual()">✅ Enviar Classificação</button>
+                </div>
+            </section>
+
+            <!-- Tab: Medir com Sensores -->
+            <section class="tab-content" id="sensores">
+                <div class="sensores-section">
+                    <h2>📱 Medir com Sensores do Celular</h2>
+                    
+                    <div class="sensores-intro">
+                        <p>O seu celular tem sensores que podem medir ruído e luz! Usaremos o microfone e a câmera para fazer as medições.</p>
+                    </div>
+
+                    <!-- Seção de Ruído -->
+                    <div class="sensores-container">
+                        <div class="sensores-card">
+                            <h3>🎤 Medir Ruído</h3>
+                            <p>Usaremos o microfone do seu celular para medir o nível de ruído do ambiente.</p>
+                            
+                            <div class="sensores-info">
+                                <p><strong>Instruções:</strong></p>
+                                <ul>
+                                    <li>Deixe o celular em um local fixo (não mexer durante medição)</li>
+                                    <li>Clique no botão abaixo</li>
+                                    <li>Permita acesso ao microfone</li>
+                                    <li>Aguarde 3 segundos enquanto capturamos o áudio</li>
+                                    <li>Receba o resultado em dB (decibéis)</li>
+                                </ul>
+                            </div>
+
+                            <div id="statusRuido" class="sensores-status"></div>
+                            
+                            <div class="sensores-resultado" id="resultadoRuido" style="display: none;">
+                                <div class="resultado-item">
+                                    <label>Nível de Ruído</label>
+                                    <p id="resultadoRuidoValor" class="resultado-valor">-- dB</p>
+                                    <p id="resultadoRuidoNivel" class="resultado-nivel"></p>
+                                </div>
+                            </div>
+
+                            <button class="btn btn-primary" id="btnMedirRuido" onclick="medirRuidoSensor()">
+                                🎤 Medir Ruído
+                            </button>
+                        </div>
+
+                        <!-- Seção de Luz -->
+                        <div class="sensores-card">
+                            <h3>💡 Medir Luminosidade</h3>
+                            <p>Usaremos a câmera do seu celular para medir a quantidade de luz do ambiente.</p>
+                            
+                            <div class="sensores-info">
+                                <p><strong>Instruções:</strong></p>
+                                <ul>
+                                    <li>Limpe a câmera do seu celular</li>
+                                    <li>Aponte para o ambiente (não tape com a mão)</li>
+                                    <li>Clique no botão abaixo</li>
+                                    <li>Permita acesso à câmera</li>
+                                    <li>Aguarde 2 segundos de captura</li>
+                                    <li>Receba o resultado em Lux</li>
+                                </ul>
+                            </div>
+
+                            <div id="statusLuminosidade" class="sensores-status"></div>
+                            
+                            <div class="sensores-resultado" id="resultadoLuminosidade" style="display: none;">
+                                <div class="resultado-item">
+                                    <label>Nível de Luminosidade</label>
+                                    <p id="resultadoLuminosidadeValor" class="resultado-valor">-- Lux</p>
+                                    <p id="resultadoLuminosidadeNivel" class="resultado-nivel"></p>
+                                </div>
+                            </div>
+
+                            <button class="btn btn-primary" id="btnMedirLuz" onclick="medirLuminosidadeSensor()">
+                                💡 Medir Luz
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Resumo da Medição -->
+                    <div class="sensores-resumo" id="sensoresResumo" style="display: none;">
+                        <h3>📊 Resumo da Medição</h3>
+                        
+                        <div class="resumo-grid">
+                            <div class="resumo-item">
+                                <label>Ruído</label>
+                                <p id="resumoRuido">-- dB</p>
+                            </div>
+                            <div class="resumo-item">
+                                <label>Luz</label>
+                                <p id="resumoLuz">-- Lux</p>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Nome do Local:</label>
+                            <input type="text" id="sensoresNomeLocal" placeholder="ex: Starbucks Shopping">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Tipo de Ambiente:</label>
+                            <select id="sensoresTipoAmbiente">
+                                <option value="">Selecione...</option>
+                            </select>
+                        </div>
+
+                        <button class="btn btn-primary btn-large" onclick="salvarMedicaoComSensores()">
+                            ✅ Salvar Medição
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Tab: Perfil -->
+            <section class="tab-content" id="perfil">
+                <div class="perfil-section">
+                    <h2>👤 Meu Perfil</h2>
+                    <div id="perfilContent"></div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Modals -->
+        <!-- Login Modal -->
+        <div class="modal" id="loginModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Login</h2>
+                    <button class="close" onclick="closeModal('loginModal')">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>Email:</label>
+                        <input type="email" id="loginEmail" placeholder="seu@email.com">
+                    </div>
+                    <div class="form-group">
+                        <label>Senha:</label>
+                        <input type="password" id="loginSenha" placeholder="••••••••">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" onclick="closeModal('loginModal')">Cancelar</button>
+                    <button class="btn btn-primary" onclick="fazerLogin()">Login</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Register Modal -->
+        <div class="modal" id="registerModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Registrar</h2>
+                    <button class="close" onclick="closeModal('registerModal')">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>Nome:</label>
+                        <input type="text" id="registerNome" placeholder="Seu Nome">
+                    </div>
+                    <div class="form-group">
+                        <label>Email:</label>
+                        <input type="email" id="registerEmail" placeholder="seu@email.com">
+                    </div>
+                    <div class="form-group">
+                        <label>Senha:</label>
+                        <input type="password" id="registerSenha" placeholder="••••••••">
+                    </div>
+                    <div class="form-group">
+                        <label>Cidade:</label>
+                        <input type="text" id="registerCidade" placeholder="São Paulo">
+                    </div>
+                    <div class="form-group">
+                        <label>Neurodiversidade:</label>
+                        <select id="registerNeurodiversidade">
+                            <option value="Nao Informado">Não informar</option>
+                            <option value="TEA">Autismo (TEA)</option>
+                            <option value="TDAH">TDAH</option>
+                            <option value="Outro">Outro</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" onclick="closeModal('registerModal')">Cancelar</button>
+                    <button class="btn btn-primary" onclick="fazerRegistro()">Registrar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Local Details Modal -->
+        <div class="modal" id="localDetailsModal">
+            <div class="modal-content modal-large">
+                <div class="modal-header">
+                    <h2 id="detailsTitle"></h2>
+                    <button class="close" onclick="closeModal('localDetailsModal')">&times;</button>
+                </div>
+                <div class="modal-body" id="detailsContent"></div>
+            </div>
+        </div>
+
+        <!-- Notification -->
+        <div class="notification" id="notification"></div>
+    </div>
+
+    <script src="script.js"></script>
+    <script src="sensores.js"></script>
+</body>
+</html>
